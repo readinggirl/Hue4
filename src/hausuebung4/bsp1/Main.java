@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,9 +26,9 @@ import java.util.logging.Logger;
  */
 public class Main {
 
-    List<String> list = new ArrayList<>();
+    List<String> liste = new ArrayList<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Scanner scanner = new Scanner(System.in, "Windows-1252");
         System.out.println("Geben Sie einen Teiler ein: ");
         int teiler = Integer.parseInt(scanner.nextLine());
@@ -35,26 +37,17 @@ public class Main {
 
         Main main = new Main();
         main.readFile();
-        //for (int i = 0; i < main.list.size(); i++) {
-        //  System.out.print(main.list.get(i) + " ");
-        //}
 
-        System.out.println(main.list.size());
-        System.out.println(main.toIntList().size());
+        List<String> test;
 
-        List<Integer> list = main.toIntList();
-        List<Integer> teilbareNr = new ArrayList<>();
-        Predicate<Integer> teilbar = i -> i % teiler == 0;
+        for (int i = 0; i < teiler / teiler; i++) {
+            test = main.liste.subList((main.liste.size() / teiler) * i, teiler);
 
-        for (int i = 0; i < list.size(); i++) {
-            if (teilbar.test(list.get(i))) {
-                teilbareNr.add(list.get(i));
-            }
+            Thread t = new Thread(new NumbersRunnable(test, teiler));
+            t.start();
+            t.join();
         }
 
-        for (int i = 0; i < list.size(); i++) {
-            System.out.print(main.list.get(i) + " ");
-        }
     }
 
     public void readFile() {
@@ -62,7 +55,7 @@ public class Main {
             BufferedReader br = new BufferedReader(new FileReader(new File("numbers.csv")));
             String line = br.readLine();
             while (line != null) {
-                list.addAll(Arrays.asList(line.split(":")));
+                liste.addAll(Arrays.asList(line.split(":")));
                 line = br.readLine();
             }
         } catch (FileNotFoundException ex) {
@@ -71,28 +64,4 @@ public class Main {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-    public boolean isNumber(String strNum) {
-        if (strNum == null) {
-            return false;
-        }
-        try {
-            int i = Integer.parseInt(strNum);
-            return true;
-        } catch (NumberFormatException nfe) {
-            return false;
-        }
-
-    }
-
-    public List<Integer> toIntList() {
-        List<Integer> intList = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            if (isNumber(list.get(i)) == true) {
-                intList.add(Integer.parseInt(list.get(i)));
-            }
-        }
-        return intList;
-    }
-
 }
