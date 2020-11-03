@@ -14,9 +14,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.function.Predicate;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,7 +29,7 @@ public class Main {
 
     List<String> liste = new ArrayList<>();
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         Scanner scanner = new Scanner(System.in, "Windows-1252");
         System.out.println("Geben Sie einen Teiler ein: ");
         int teiler = Integer.parseInt(scanner.nextLine());
@@ -37,17 +38,10 @@ public class Main {
 
         Main main = new Main();
         main.readFile();
+        List<Integer> list = main.removeFalse();
 
-        List<String> test;
-
-        for (int i = 0; i < teiler / teiler; i++) {
-            test = main.liste.subList((main.liste.size() / teiler) * i, teiler);
-
-            Thread t = new Thread(new NumbersRunnable(test, teiler));
-            t.start();
-            t.join();
-        }
-
+        ForkJoinPool custom = new ForkJoinPool(chunks);
+        custom.submit(() -> list.parallelStream().filter(n -> (n % teiler) == 0)).get().forEach(System.out::println);
     }
 
     public void readFile() {
@@ -62,6 +56,25 @@ public class Main {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public List<Integer> removeFalse() {
+        List<Integer> iList = new ArrayList();
+        for (int i = 0; i < liste.size(); i++) {
+            if (isNumeric(liste.get(i))) {
+                iList.add(Integer.parseInt(liste.get(i)));
+            }
+        }
+        return iList;
+    }
+
+    private boolean isNumeric(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 }
