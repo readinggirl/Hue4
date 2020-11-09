@@ -5,21 +5,18 @@
  */
 package hausuebung4.bsp1;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.ForkJoinTask;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *
@@ -38,28 +35,21 @@ public class Main {
 
         Main main = new Main();
         main.readFile();
-        List<Integer> list = main.removeFalse();
+        List<Integer> list = main.splitToIntList();
 
         ForkJoinPool custom = new ForkJoinPool(chunks);
-        custom.submit(() -> list.parallelStream().filter(n -> (n % teiler) == 0)).get().forEach(System.out::println);
+        custom.submit(() -> list.parallelStream().filter(n -> n % teiler == 0).forEach(System.out::println));
     }
 
     public void readFile() {
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(new File("numbers.csv")));
-            String line = br.readLine();
-            while (line != null) {
-                liste.addAll(Arrays.asList(line.split(":")));
-                line = br.readLine();
-            }
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        try (Stream<String> stream = Files.lines(Paths.get("numbers.csv"))) {
+            liste = stream.collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    public List<Integer> removeFalse() {
+    /* public List<Integer> toIntList() {
         List<Integer> iList = new ArrayList();
         for (int i = 0; i < liste.size(); i++) {
             if (isNumeric(liste.get(i))) {
@@ -67,8 +57,7 @@ public class Main {
             }
         }
         return iList;
-    }
-
+    } */
     private boolean isNumeric(String str) {
         try {
             Integer.parseInt(str);
@@ -76,5 +65,18 @@ public class Main {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    private List<Integer> splitToIntList() {
+        List<Integer> list = new ArrayList<>();
+        for (int j = 0; j < liste.size(); j++) {
+            String[] val = liste.get(j).split(":");
+            for (int i = 0; i < val.length; i++) {
+                if (isNumeric(val[i])) {
+                    list.add(Integer.parseInt(val[i]));
+                }
+            }
+        }
+        return list;
     }
 }
